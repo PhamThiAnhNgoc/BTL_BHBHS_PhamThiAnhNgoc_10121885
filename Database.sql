@@ -115,23 +115,26 @@ GO
 USE [BTLPTPMHDV_QLBHS]
 GO
 
-/****** Object:  Table [dbo].[User]    Script Date: 9/23/2023 11:42:20 AM ******/
+/****** Object:  Table [dbo].[QuanTri]    Script Date: 9/23/2023 11:42:20 AM ******/
 SET ANSI_NULLS ON
 GO
 
 SET QUOTED_IDENTIFIER ON
 GO
 
-CREATE TABLE [dbo].[User](
-	[user_id] [varchar](50) NOT NULL,
+CREATE TABLE [dbo].[QuanTri](
+	[quantri_id] [varchar](50) NOT NULL,
 	[hoten] [nvarchar](max) NULL,
-	[ngaysinh] [date] NULL,
 	[diachi] [nvarchar](250) NULL,
 	[gioitinh] [nvarchar](30) NULL,
 	[email] [nvarchar](max) NULL,
 	[taikhoan] [nvarchar](max) NULL,
 	[matkhau] [nvarchar](max) NULL
-) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+	CONSTRAINT [PK_QuanTri] PRIMARY KEY CLUSTERED 
+(
+	[quantri_id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
 GO
 USE [BTLPTPMHDV_QLBHS]
 GO
@@ -144,10 +147,14 @@ SET QUOTED_IDENTIFIER ON
 GO
 
 CREATE TABLE [dbo].[SanPham](
-	[IDHangHoa] [nchar](10) NULL,
+	[IDHangHoa] [nvarchar](10) NOT NULL,
 	[TenSP] [nvarchar](max) NULL,
-	[SoL] [nchar](10) NULL
-) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+	[SoL] [int] NULL,
+   CONSTRAINT [PK_SanPham] PRIMARY KEY CLUSTERED 
+(
+	[IDHangHoa] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
 GO
 USE [BTLPTPMHDV_QLBHS]
 GO
@@ -160,9 +167,13 @@ SET QUOTED_IDENTIFIER ON
 GO
 
 CREATE TABLE [dbo].[HoaDon](
-	[MaHD] [nchar](10) NULL,
+	[MaHD] [nvarchar](10) Not NULL,
 	[HoTenKh] [nvarchar](50) NULL,
 	[DiaChi] [nvarchar](50) NULL
+CONSTRAINT [PK_HoaDon] PRIMARY KEY CLUSTERED 
+(
+	[MaHD] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
 USE [BTLPTPMHDV_QLBHS]
@@ -176,13 +187,68 @@ SET QUOTED_IDENTIFIER ON
 GO
 
 CREATE TABLE [dbo].[ChiTieHD](
-	[MaCT] [nvarchar](50) NULL,
-	[MaHD] [nvarchar](50) NULL,
-	[MaHH] [nvarchar](50) NULL,
+	[MaCT] [nvarchar](50) Not NULL,
+	[MaHD] [nvarchar](10) NULL,
+	[MaHH] [nvarchar](10) NULL,
 	[SoL] [int] NULL
+CONSTRAINT [PK_ChiTietHD] PRIMARY KEY CLUSTERED 
+(
+	[MaCT] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
 
+CREATE PROCEDURE [dbo].[sp_quantri_get_by_id](@quantri_id VARCHAR(50))
+AS
+    BEGIN
+        SELECT  [quantri_id]               , 
+					 hoten           ,
+					 
+					 diachi           ,
+					 gioitinh           ,
+					 email           ,
+					 taikhoan         ,
+					 matkhau           
+					  
+        FROM [QuanTri]
+      where  [quantri_id] = @quantri_id;
+    END;
+GO
+ 
+CREATE PROCEDURE [dbo].[sp_quantri_create]
+(@quantri_id  varchar(50), 
+ @hoten  nvarchar(150) ,
+ @diachi nvarchar(250)  ,
+ @gioitinh nvarchar(30)  ,
+ @email varchar(150) ,
+ @taikhoan varchar(30) ,
+ @matkhau  varchar(60) 
+)
+AS
+    BEGIN
+      INSERT INTO [QuanTri]
+                (
+				 	 [quantri_id]               , 
+					 hoten           ,
+					 diachi           ,
+					 gioitinh           ,
+					 email           ,
+					 taikhoan         ,
+					 matkhau           
+				)
+                VALUES
+                (
+				 @quantri_id   , 
+				 @hoten           ,
+				 @diachi           ,
+				 @gioitinh           ,
+				 @email           ,
+				 @taikhoan         ,
+				 @matkhau           
+				);
+        SELECT '';
+    END;
+GO
 
 
 
