@@ -1,4 +1,4 @@
-USE [master]
+﻿USE [master]
 GO
 
 /****** Object:  Database [BTLPTPMHDV_QLBHS]    Script Date: 9/23/2023 11:41:48 AM ******/
@@ -197,13 +197,12 @@ CONSTRAINT [PK_ChiTietHD] PRIMARY KEY CLUSTERED
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
-
+EXEc dbo.sp_quantri_get_by_id '01'
 CREATE PROCEDURE [dbo].[sp_quantri_get_by_id](@quantri_id VARCHAR(50))
 AS
     BEGIN
-        SELECT  [quantri_id]               , 
-					 hoten           ,
-					 
+        SELECT  [quantri_id] , 
+					 hoten           , 
 					 diachi           ,
 					 gioitinh           ,
 					 email           ,
@@ -249,6 +248,84 @@ AS
         SELECT '';
     END;
 GO
+--///Sửa quản trị
+create PROCEDURE [dbo].[sp_quantri_update](
+@quantri_id  varchar(50), 
+ @hoten  nvarchar(150) ,
+ @diachi nvarchar(250)  ,
+ @gioitinh nvarchar(30)  ,
+ @email varchar(150) ,
+ @taikhoan varchar(30) ,
+ @matkhau  varchar(60) 
+)
+AS
+    BEGIN
+       Update  QuanTri
+	   set hoten=@hoten, diachi=@diachi,gioitinh=@gioitinh, email=@email, taikhoan=@taikhoan,matkhau=@matkhau
+	   where quantri_id=@quantri_id;
+    END;
+
+--///xóa quản trị 
+create PROCEDURE [dbo].[sp_quantri_delete](
+@quantri_id  varchar(50)
+)
+AS
+    BEGIN
+       Delete from   QuanTri
+	   where quantri_id=@quantri_id;
+    END;
+--/// Tìm kiếm quản trị
+Create PROCEDURE [dbo].[sp_quantri_search] (@page_index  INT, 
+                                       @page_size   INT,
+									 @hoten  nvarchar(150) ,
+									 @diachi nvarchar(250)  
+									   )
+AS
+    BEGIN
+        DECLARE @RecordCount BIGINT;
+        IF(@page_size <> 0)
+            BEGIN
+						SET NOCOUNT ON;
+                        SELECT(ROW_NUMBER() OVER(
+                              ORDER BY hoten ASC)) AS RowNumber, 
+                              qt.quantri_id,
+							  qt.hoten,
+							  qt.diachi
+                        INTO #Results1
+                        FROM QuanTri AS qt
+					    WHERE  (@hoten = '' Or qt.hoten like N'%'+@hoten+'%') and						
+						(@diachi = '' Or qt.diachi like N'%'+@diachi+'%');                   
+                        SELECT @RecordCount = COUNT(*)
+                        FROM #Results1;
+                        SELECT *, 
+                               @RecordCount AS RecordCount
+                        FROM #Results1
+                        WHERE ROWNUMBER BETWEEN(@page_index - 1) * @page_size + 1 AND(((@page_index - 1) * @page_size + 1) + @page_size) - 1
+                              OR @page_index = -1;
+                        DROP TABLE #Results1; 
+            END;
+            ELSE
+            BEGIN
+						SET NOCOUNT ON;
+                        SELECT(ROW_NUMBER() OVER(
+                              ORDER BY hoten ASC)) AS RowNumber, 
+                              qt.quantri_id,
+							  qt.hoten,
+							  qt.diachi
+                        INTO #Results2
+                        FROM QuanTri AS qt
+					    WHERE  (@hoten = '' Or qt.hoten like N'%'+@hoten+'%') and						
+						(@diachi = '' Or qt.diachi like N'%'+@diachi+'%');                   
+                        SELECT @RecordCount = COUNT(*)
+                        FROM #Results2;
+                        SELECT *, 
+                               @RecordCount AS RecordCount
+                        FROM #Results2;                        
+                        DROP TABLE #Results1; 
+        END;
+    END;
+
+
 
 
 
