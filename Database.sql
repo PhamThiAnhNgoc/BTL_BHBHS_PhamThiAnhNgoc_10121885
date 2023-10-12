@@ -146,16 +146,60 @@ GO
 SET QUOTED_IDENTIFIER ON
 GO
 
+USE [BTLPTPMHDV_QLBHS]
+GO
+USE [BTLPTPMHDV_QLBHS]
+GO
+
+/****** Object:  Table [dbo].[LoaiSP]    Script Date: 10/12/2023 9:33:00 AM ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE TABLE [dbo].[LoaiSP](
+	[MaLSP] [nvarchar](50) NOT NULL,
+	[TenLH] [nvarchar](max) NULL,
+	[NoiDung] [nvarchar](50) NULL,
+ CONSTRAINT [PK_LoaiSP] PRIMARY KEY CLUSTERED 
+(
+	[MaLSP] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+GO
+
+
+/****** Object:  Table [dbo].[SanPham]    Script Date: 10/12/2023 9:31:28 AM ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
 CREATE TABLE [dbo].[SanPham](
 	[IDHangHoa] [nvarchar](10) NOT NULL,
+	[LoaiSP] [nvarchar](50) NULL,
 	[TenSP] [nvarchar](max) NULL,
 	[SoL] [int] NULL,
-   CONSTRAINT [PK_SanPham] PRIMARY KEY CLUSTERED 
+	[AnhSP] [nvarchar](max) NULL,
+	[TinhTrang] [nvarchar](max) NULL,
+	[GiaSP] [decimal](18, 0) NULL,
+ CONSTRAINT [PK_SanPham] PRIMARY KEY CLUSTERED 
 (
 	[IDHangHoa] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
-) ON [PRIMARY]
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
 GO
+
+ALTER TABLE [dbo].[SanPham]  WITH CHECK ADD  CONSTRAINT [FK_SanPham_LoaiSP] FOREIGN KEY([LoaiSP])
+REFERENCES [dbo].[LoaiSP] ([MaLSP])
+GO
+
+ALTER TABLE [dbo].[SanPham] CHECK CONSTRAINT [FK_SanPham_LoaiSP]
+GO
+
+
 USE [BTLPTPMHDV_QLBHS]
 GO
 
@@ -166,16 +210,29 @@ GO
 SET QUOTED_IDENTIFIER ON
 GO
 
+USE [BTLPTPMHDV_QLBHS]
+GO
+
+/****** Object:  Table [dbo].[HoaDon]    Script Date: 10/12/2023 9:31:54 AM ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
 CREATE TABLE [dbo].[HoaDon](
-	[MaHD] [nvarchar](10) Not NULL,
+	[MaHD] [nvarchar](10) NOT NULL,
 	[HoTenKh] [nvarchar](50) NULL,
-	[DiaChi] [nvarchar](50) NULL
-CONSTRAINT [PK_HoaDon] PRIMARY KEY CLUSTERED 
+	[DiaChi] [nvarchar](50) NULL,
+	[NgayTao] [datetime] NULL,
+	[Sdt] [nvarchar](50) NULL,
+ CONSTRAINT [PK_HoaDon] PRIMARY KEY CLUSTERED 
 (
 	[MaHD] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
+
 USE [BTLPTPMHDV_QLBHS]
 GO
 
@@ -186,17 +243,73 @@ GO
 SET QUOTED_IDENTIFIER ON
 GO
 
+USE [BTLPTPMHDV_QLBHS]
+GO
+
+/****** Object:  Table [dbo].[ChiTietSP]    Script Date: 10/12/2023 9:32:18 AM ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
+CREATE TABLE [dbo].[ChiTietSP](
+	[ChiTietSPID] [nvarchar](50) NOT NULL,
+	[SanPhamID] [nvarchar](10) NULL,
+	[AnhCT] [nvarchar](max) NULL,
+	[MoTa] [nvarchar](max) NULL,
+ CONSTRAINT [PK_ChiTietSP] PRIMARY KEY CLUSTERED 
+(
+	[ChiTietSPID] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+GO
+
+ALTER TABLE [dbo].[ChiTietSP]  WITH CHECK ADD  CONSTRAINT [FK_ChiTietSP_SanPham] FOREIGN KEY([SanPhamID])
+REFERENCES [dbo].[SanPham] ([IDHangHoa])
+GO
+
+ALTER TABLE [dbo].[ChiTietSP] CHECK CONSTRAINT [FK_ChiTietSP_SanPham]
+GO
+USE [BTLPTPMHDV_QLBHS]
+GO
+
+/****** Object:  Table [dbo].[ChiTieHD]    Script Date: 10/12/2023 9:32:37 AM ******/
+SET ANSI_NULLS ON
+GO
+
+SET QUOTED_IDENTIFIER ON
+GO
+
 CREATE TABLE [dbo].[ChiTieHD](
-	[MaCT] [nvarchar](50) Not NULL,
+	[MaCT] [nvarchar](50) NOT NULL,
 	[MaHD] [nvarchar](10) NULL,
 	[MaHH] [nvarchar](10) NULL,
-	[SoL] [int] NULL
-CONSTRAINT [PK_ChiTietHD] PRIMARY KEY CLUSTERED 
+	[SoL] [int] NULL,
+	[TongGia] [decimal](18, 0) NULL,
+ CONSTRAINT [PK_ChiTietHD] PRIMARY KEY CLUSTERED 
 (
 	[MaCT] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
+
+ALTER TABLE [dbo].[ChiTieHD]  WITH CHECK ADD  CONSTRAINT [FK_ChiTieHD_HoaDon] FOREIGN KEY([MaHD])
+REFERENCES [dbo].[HoaDon] ([MaHD])
+GO
+
+ALTER TABLE [dbo].[ChiTieHD] CHECK CONSTRAINT [FK_ChiTieHD_HoaDon]
+GO
+
+ALTER TABLE [dbo].[ChiTieHD]  WITH CHECK ADD  CONSTRAINT [FK_ChiTieHD_SanPham] FOREIGN KEY([MaHH])
+REFERENCES [dbo].[SanPham] ([IDHangHoa])
+GO
+
+ALTER TABLE [dbo].[ChiTieHD] CHECK CONSTRAINT [FK_ChiTieHD_SanPham]
+GO
+
+
+
 EXEc dbo.sp_quantri_get_by_id '01'
 CREATE PROCEDURE [dbo].[sp_quantri_get_by_id](@quantri_id VARCHAR(50))
 AS
@@ -325,6 +438,62 @@ AS
         END;
     END;
 
+--//GetByID LoaiSP
+CREATE PROCEDURE [dbo].[sp_loaiSP_get_by_id](@MaLSP NVARCHAR(50))
+AS
+    BEGIN
+        SELECT  [MaLSP] , 
+					 TenLH           , 
+					 NoiDung
+        FROM [LoaiSP]
+      where  [MaLSP] = @MaLSP;
+    END;
+GO
+ 
+CREATE PROCEDURE [dbo].[sp_LoaiSP_create]
+(@MaLSP  Nvarchar(50), 
+ @TenLH  nvarchar(Max) ,
+ @NoiDung nvarchar(50)  
+)
+AS
+    BEGIN
+      INSERT INTO [LoaiSP]
+                (
+				 	 [MaLSP]               , 
+					 TenLH          ,
+					 NoiDung          
+				)
+                VALUES
+                (
+				 @MaLSP   , 
+				 @TenLH         ,
+				 @NoiDung          
+				);
+        SELECT '';
+    END;
+GO
+--///Sửa loại sản phẩm
+create PROCEDURE [dbo].[sp_loaisp_update](
+@MaLSP  Nvarchar(50), 
+ @TenLH  nvarchar(Max) ,
+ @NoiDung nvarchar(50)  
+)
+AS
+    BEGIN
+       Update  LoaiSP
+	   set MaLSP=@MaLSP, TenLH=@TenLH,NoiDung=@NoiDung
+	   where MaLSP=@MaLSP;
+    END;
+
+--///xóa loại sản phẩm
+create PROCEDURE [dbo].[sp_loaisp_delete](
+@MaLSP  Nvarchar(50)
+)
+AS
+    BEGIN
+       Delete from   LoaiSP
+	   where MaLSP=@MaLSP;
+    END;
 
 
 
