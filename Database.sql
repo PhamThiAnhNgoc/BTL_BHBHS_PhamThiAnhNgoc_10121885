@@ -486,17 +486,293 @@ AS
     END;
 
 --///xóa loại sản phẩm
-create PROCEDURE [dbo].[sp_loaisp_delete](
+alter  PROCEDURE [dbo].[sp_loaisp_delete](
 @MaLSP  Nvarchar(50)
 )
 AS
     BEGIN
+		--Delete From ChiTietSP where SanPhamID=@IDHangHoa
+		--delete from SanPham  where LoaiSP=@MaLSP
        Delete from   LoaiSP
 	   where MaLSP=@MaLSP;
     END;
 
+---//GetById Sản phẩm
+Alter  PROCEDURE [dbo].[sp_sanpham_get_by_id](@IDHangHoa nvarchar(10))
+AS
+    BEGIN
+        SELECT h.*, 
+        (
+            SELECT c.*
+            FROM ChiTietSP AS c
+            WHERE h.IDHangHoa = c.SanPhamID FOR JSON PATH
+        ) AS list_json_chitietsanpham
+        FROM SanPham AS h
+        WHERE  h.IDHangHoa = @IDHangHoa;
+    END;
 
 
+--//Thêm sảm phẩm
+create  PROCEDURE [dbo].[sp_sanpham_create]
+(@IDHangHoa NVARCHAR(10), 
+ @LoaiSP NVARCHAR(50), 
+ @TenSP nvarchar(50),
+ @SoL int, 
+ @AnhSP nvarchar(MAX),
+ @TinhTrang nvarchar(MAX),
+ @GiaSP decimal(18,0),
+ @list_json_chitietsanpham NVARCHAR(MAX)
+)
+AS
+    BEGIN
+        INSERT INTO SanPham
+                (IDHangHoa, 
+                 LoaiSP, 
+				 TenSP,
+                 SoL,
+				 AnhSP,
+				 TinhTrang,
+				 GiaSP
+                )
+                VALUES
+                (@IDHangHoa, 
+                 @LoaiSP,
+				 @TenSP,
+                 @SoL,
+				 @AnhSP,
+				 @TinhTrang,
+				 @GiaSP
+                );
 
+                IF(@list_json_chitietsanpham IS NOT NULL)
+                    BEGIN
+                        INSERT INTO ChiTietSP
+						 (ChiTietSPID, 
+						  SanPhamID,
+                          AnhCT, 
+                          MoTa               
+                        )
+                    SELECT JSON_VALUE(p.value, '$.chiTietSPID'), 
+                            @IDHangHoa, 
+                            JSON_VALUE(p.value, '$.anhCT'), 
+							JSON_VALUE(p.value, '$.moTa')
+                    FROM OPENJSON(@list_json_chitietsanpham) AS p;
+                END;
+        SELECT '';
+    END;
+GO
 
+--//Sửa sản phẩm
+create PROCEDURE [dbo].[sp_sanpham_update]
+(@IDHangHoa NVARCHAR(10), 
+ @LoaiSP NVARCHAR(50), 
+ @TenSP nvarchar(50),
+ @SoL int, 
+ @AnhSP nvarchar(MAX),
+ @TinhTrang nvarchar(MAX),
+ @GiaSP decimal(18,0),
+ @list_json_chitietsanpham NVARCHAR(MAX)
+)
+AS
+    BEGIN
+		UPDATE SanPham
+		SET
+			LoaiSP  = @LoaiSP,
+			TenSP = @TenSP,
+			SoL=@SoL,
+			AnhSP=@AnhSP,
+			TinhTrang=@TinhTrang,
+			GiaSP=@GiaSP
+		WHERE IDHangHoa = @IDHangHoa;
+		
+		IF(@list_json_chitietsanpham IS NOT NULL) 
+		BEGIN
+			 -- Insert data to temp table 
+		   SELECT
+			  JSON_VALUE(p.value, '$.chiTietSPID') as chiTietSPID,
+			  JSON_VALUE(p.value, '$.sanPhamID') as sanPhamID,
+			  JSON_VALUE(p.value, '$.anhCT') as anhCT,
+			  JSON_VALUE(p.value, '$.moTa') as moTa,
+			  JSON_VALUE(p.value, '$.status') AS status 
+			  INTO #Results 
+		   FROM OPENJSON(@list_json_chitietsanpham) AS p;
+		 
+		 -- Insert data to table with STATUS = 1;
+			INSERT INTO ChiTietSP(ChiTietSPID, 
+						  SanPhamID,
+                          AnhCT, 
+                          MoTa ) 
+			   SELECT
+				  #Results.chiTietSPID,
+				  @IDHangHoa,
+				  #Results.anhCT,
+				  #Results.moTa			 
+			   FROM  #Results 
+			   WHERE #Results.status = '1' 
+			
+			-- Update data to table with STATUS = 2
+			  UPDATE ChiTietSP 
+			  SET
+				 AnhCT = #Results.anhCT,
+				 MoTa = #Results.moTa
+			  FROM #Results 
+			  WHERE  ChiTietSP.ChiTietSPID = #Results.chiTietSPID AND #Results.status = '2';
+			
+			-- Delete data to table with STATUS = 3
+			DELETE C
+			FROM ChiTietSP C
+			INNER JOIN #Results R
+				ON C.ChiTietSPID=R.chiTietSPID
+			WHERE R.status = '3';
+			DROP TABLE #Results;
+		END;
+        SELECT '';
+    END;
+---//Xóa sản phẩm
+create  PROCEDURE [dbo].[sp_sanpham_delete]
+(@IDHangHoa NVARCHAR(10)
+ )
+AS
+    BEGIN
+        Delete From ChiTietSP where SanPhamID=@IDHangHoa
+		delete from SanPham where IDHangHoa=@IDHangHoa
+    END;
+GO
 
+---//Search sản phẩm
+alter  PROCEDURE [dbo].[sp_sanpham_search]
+    @TenSP NVARCHAR(100)
+AS
+    BEGIN
+        SELECT s.*, 
+        (
+            SELECT c.*
+            FROM ChiTietSP AS c
+            WHERE s.IDHangHoa = c.SanPhamID FOR JSON PATH
+        ) AS list_json_chitietsanpham
+        FROM SanPham AS s
+       WHERE s.TenSP LIKE '%' + @TenSP + '%';
+    END;
+ exec [dbo].[sp_sanpham_search] c
+
+---//Thêm hóa đơn
+create  PROCEDURE [dbo].[sp_hoadon_create]
+(@MaHD NVARCHAR(10),
+ @HoTenKH NVARCHAR(50), 
+ @DiaChi nvarchar(50),  
+ @NgayTao datetime ,
+@Sdt nvarchar(50),
+ @list_json_chitiethoadon NVARCHAR(MAX)
+)
+AS
+    BEGIN
+        INSERT INTO HoaDon
+                (MaHD,
+				HoTenKh, 
+                 DiaChi, 
+				NgayTao,
+				Sdt
+                )
+                VALUES
+                (@MaHD,
+				@HoTenKH, 
+                 @DiaChi, 
+                 @NgayTao,
+				 @Sdt
+                );
+                IF(@list_json_chitiethoadon IS NOT NULL)
+                    BEGIN
+                        INSERT INTO ChiTieHD
+						 (MaCT,
+						 MaHD, 
+						  MaHH,
+                          SoL,
+                          TongGia               
+                        )
+                    SELECT	JSON_VALUE(p.value, '$.maCT'),
+							@MaHD,
+							JSON_VALUE(p.value, '$.maHH'), 
+                            JSON_VALUE(p.value, '$.soL'), 
+                            JSON_VALUE(p.value, '$.tongGia')    
+                    FROM OPENJSON(@list_json_chitiethoadon) AS p
+                END;
+        SELECT '';
+    END;
+GO
+--//Sửa hóa đơn
+create  PROCEDURE [dbo].[sp_hoa_don_update]
+(@MaHD NVARCHAR(10),
+ @HoTenKH NVARCHAR(50), 
+ @DiaChi nvarchar(50),  
+ @NgayTao datetime ,
+@Sdt nvarchar(50),
+ @list_json_chitiethoadon NVARCHAR(MAX)
+)
+AS
+    BEGIN
+		UPDATE HoaDon
+		SET
+			HoTenKh  = @HoTenKH ,
+			DiaChi = @DiaChi,
+			NgayTao=@NgayTao,
+			Sdt=@Sdt
+		WHERE MaHD = @MaHD;
+		
+		IF(@list_json_chitiethoadon IS NOT NULL) 
+		BEGIN
+			 -- Insert data to temp table 
+		   SELECT
+			  JSON_VALUE(p.value, '$.maCT') as maCT,
+			  JSON_VALUE(p.value, '$.maHD') as maHD,
+			  JSON_VALUE(p.value, '$.maHH') as maHH,
+			  JSON_VALUE(p.value, '$.soL') as soL,
+			  JSON_VALUE(p.value, '$.tongGia') as tongGia,
+			  JSON_VALUE(p.value, '$.status') AS status 
+			  INTO #Results 
+		   FROM OPENJSON(@list_json_chitiethoadon) AS p;
+		 
+		 -- Insert data to table with STATUS = 1;
+			INSERT INTO ChiTieHD(
+						MaCT,
+						 MaHD, 
+						  MaHH,
+                          SoL,
+                          TongGia  ) 
+			   SELECT
+				  #Results.maCT,
+				  @MaHD,
+				  #Results.maHH,
+				  #Results.soL,
+				  #Results.tongGia			 
+			   FROM  #Results 
+			   WHERE #Results.status = '1' 
+			
+			-- Update data to table with STATUS = 2
+			  UPDATE ChiTieHD 
+			  SET
+				 SoL = #Results.soL,
+				 TongGia = #Results.tongGia
+			  FROM #Results 
+			  WHERE  ChiTieHD.MaCT = #Results.maCT AND #Results.status = '2';
+			
+			-- Delete data to table with STATUS = 3
+			DELETE C
+			FROM ChiTieHD C
+			INNER JOIN #Results R
+				ON C.MaCT=R.maCT
+			WHERE R.status = '3';
+			DROP TABLE #Results;
+		END;
+        SELECT '';
+    END;
+
+--//Xóa Hóa Đơn
+create  PROCEDURE [dbo].[sp_hoadon_delete]
+(@MaHD NVARCHAR(10)
+ )
+AS
+    BEGIN
+        Delete From ChiTieHD where MaHD=@MaHD
+		delete from HoaDon where MaHD=@MaHD
+    END;
+GO
