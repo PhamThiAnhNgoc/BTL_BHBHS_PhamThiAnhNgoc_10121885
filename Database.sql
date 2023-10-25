@@ -122,17 +122,31 @@ GO
 SET QUOTED_IDENTIFIER ON
 GO
 
-CREATE TABLE [dbo].[QuanTri](
+create TABLE [dbo].[QuanTri](
 	[quantri_id] [varchar](50) NOT NULL,
 	[hoten] [nvarchar](max) NULL,
 	[diachi] [nvarchar](250) NULL,
 	[gioitinh] [nvarchar](30) NULL,
 	[email] [nvarchar](max) NULL,
+	[vaitro][nvarchar](250) Null,
 	[taikhoan] [nvarchar](max) NULL,
 	[matkhau] [nvarchar](max) NULL
 	CONSTRAINT [PK_QuanTri] PRIMARY KEY CLUSTERED 
 (
 	[quantri_id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+create TABLE [dbo].[KhachHang](
+	[khachhang_id] [nvarchar](50) NOT NULL,
+	[hoten] [nvarchar](max) NULL,
+	[diachi] [nvarchar](250) NULL,
+	[email] [nvarchar](max) NULL,
+	[taikhoan] [nvarchar](max) NULL,
+	[matkhau] [nvarchar](max) NULL
+	CONSTRAINT [PK_KhachHang] PRIMARY KEY CLUSTERED 
+(
+	[khachhang_id] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
 GO
@@ -311,7 +325,7 @@ GO
 
 
 EXEc dbo.sp_quantri_get_by_id '01'
-CREATE PROCEDURE [dbo].[sp_quantri_get_by_id](@quantri_id VARCHAR(50))
+alter PROCEDURE [dbo].[sp_quantri_get_by_id](@quantri_id VARCHAR(50))
 AS
     BEGIN
         SELECT  [quantri_id] , 
@@ -319,6 +333,7 @@ AS
 					 diachi           ,
 					 gioitinh           ,
 					 email           ,
+					 vaitro,
 					 taikhoan         ,
 					 matkhau           
 					  
@@ -327,54 +342,58 @@ AS
     END;
 GO
  
-CREATE PROCEDURE [dbo].[sp_quantri_create]
+alter PROCEDURE [dbo].[sp_quantri_create]
 (@quantri_id  varchar(50), 
- @hoten  nvarchar(150) ,
+ @hoten  nvarchar(max) ,
  @diachi nvarchar(250)  ,
  @gioitinh nvarchar(30)  ,
- @email varchar(150) ,
- @taikhoan varchar(30) ,
- @matkhau  varchar(60) 
+ @email nvarchar(max) ,
+ @vaitro nvarchar(250),
+ @taikhoan nvarchar(max) ,
+ @matkhau  nvarchar(max) 
 )
 AS
     BEGIN
       INSERT INTO [QuanTri]
                 (
-				 	 [quantri_id]               , 
-					 hoten           ,
-					 diachi           ,
-					 gioitinh           ,
-					 email           ,
-					 taikhoan         ,
+				 	 [quantri_id] , 
+					 hoten ,
+					 diachi ,
+					 gioitinh ,
+					 email ,
+					 vaitro,
+					 taikhoan ,
 					 matkhau           
 				)
                 VALUES
                 (
 				 @quantri_id   , 
-				 @hoten           ,
-				 @diachi           ,
-				 @gioitinh           ,
-				 @email           ,
-				 @taikhoan         ,
+				 @hoten ,
+				 @diachi,
+				 @gioitinh ,
+				 @email ,
+				 @vaitro,
+				 @taikhoan  ,
 				 @matkhau           
 				);
         SELECT '';
     END;
 GO
 --///Sửa quản trị
-create PROCEDURE [dbo].[sp_quantri_update](
+alter PROCEDURE [dbo].[sp_quantri_update](
 @quantri_id  varchar(50), 
- @hoten  nvarchar(150) ,
+ @hoten  nvarchar(max) ,
  @diachi nvarchar(250)  ,
  @gioitinh nvarchar(30)  ,
- @email varchar(150) ,
- @taikhoan varchar(30) ,
- @matkhau  varchar(60) 
+ @email nvarchar(max) ,
+ @vaitro nvarchar(250),
+ @taikhoan nvarchar(max) ,
+ @matkhau  nvarchar(max) 
 )
 AS
     BEGIN
        Update  QuanTri
-	   set hoten=@hoten, diachi=@diachi,gioitinh=@gioitinh, email=@email, taikhoan=@taikhoan,matkhau=@matkhau
+	   set hoten=@hoten, diachi=@diachi,gioitinh=@gioitinh, email=@email,vaitro=@vaitro, taikhoan=@taikhoan,matkhau=@matkhau
 	   where quantri_id=@quantri_id;
     END;
 
@@ -388,9 +407,9 @@ AS
 	   where quantri_id=@quantri_id;
     END;
 --/// Tìm kiếm quản trị
-Create PROCEDURE [dbo].[sp_quantri_search] (@page_index  INT, 
+alter PROCEDURE [dbo].[sp_quantri_search] (@page_index  INT, 
                                        @page_size   INT,
-									 @hoten  nvarchar(150) ,
+									 @hoten  nvarchar(max) ,
 									 @diachi nvarchar(250)  
 									   )
 AS
@@ -403,7 +422,11 @@ AS
                               ORDER BY hoten ASC)) AS RowNumber, 
                               qt.quantri_id,
 							  qt.hoten,
-							  qt.diachi
+							  qt.diachi,
+							  qt.gioitinh,
+							  qt.email,
+							  qt.vaitro,
+							  qt.taikhoan,qt.matkhau
                         INTO #Results1
                         FROM QuanTri AS qt
 					    WHERE  (@hoten = '' Or qt.hoten like N'%'+@hoten+'%') and						
@@ -424,7 +447,11 @@ AS
                               ORDER BY hoten ASC)) AS RowNumber, 
                               qt.quantri_id,
 							  qt.hoten,
-							  qt.diachi
+							  qt.diachi,
+							  qt.gioitinh,
+							  qt.email,
+							  qt.vaitro,
+							  qt.taikhoan,qt.matkhau
                         INTO #Results2
                         FROM QuanTri AS qt
 					    WHERE  (@hoten = '' Or qt.hoten like N'%'+@hoten+'%') and						
@@ -639,94 +666,142 @@ AS
     END;
 GO
 
----//Search sản phẩm
-alter  PROCEDURE [dbo].[sp_sanpham_search]
-    @TenSP NVARCHAR(100)
-AS
-    BEGIN
-        SELECT s.*, 
-        (
-            SELECT c.*
-            FROM ChiTietSP AS c
-            WHERE s.IDHangHoa = c.SanPhamID FOR JSON PATH
-        ) AS list_json_chitietsanpham
-        FROM SanPham AS s
-       WHERE s.TenSP LIKE '%' + @TenSP + '%';
-    END;
- exec [dbo].[sp_sanpham_search] c
- --//Tìm kiếm hóa đơn
- alter PROCEDURE [dbo].[sp_sanpham_search] (@page_index  INT, 
+---//Thống kê sản phẩm theo tình trạng
+
+alter PROCEDURE [dbo].[sp_thong_ke_sanpham] (@page_index  INT, 
                                        @page_size   INT,
-									   @TenSP Nvarchar(max),
-									   @IDHangHoa nvarchar(10)
+									   @ten_sanpham Nvarchar(max),
+									   @TinhTrang nvarchar(max)
 									   )
 AS
     BEGIN
-		DECLARE @list_json_chitietsanpham NVARCHAR(MAX);
-		SELECT @list_json_chitietsanpham = (
-								SELECT
-									c.ChiTietSPID,
-									c.SanPhamID,
-									c.AnhCT,
-									c.MoTa
-								FROM ChiTietSP AS c
-								WHERE c.SanPhamID = @IDHangHoa
-								FOR JSON AUTO
-							)
         DECLARE @RecordCount BIGINT;
         IF(@page_size <> 0)
             BEGIN
 						SET NOCOUNT ON;
-						SELECT
-							ROW_NUMBER() OVER (ORDER BY s.TenSP ASC) AS RowNumber,
-							s.IDHangHoa,
-							s.LoaiSP,
-							s.TenSP,
-							s.SoL,
-							s.AnhSP,
-							s.TinhTrang,
-							s.GiaSP,
-							@list_json_chitietsanpham as list_json_chitietsanpham
-						INTO #Results1
-						FROM SanPham AS s
-						WHERE
-							(@TenSP = '' OR s.TenSP LIKE N'%' + @TenSP + '%')
-							and s.IDHangHoa = @IDHangHoa;
-						SELECT @RecordCount = COUNT(*)
+                        SELECT(ROW_NUMBER() OVER(
+                              ORDER BY s.TenSP ASC)) AS RowNumber, 
+                              s.IDHangHoa,
+							  s.TenSP,
+							  l.TenLH,
+							  s.SoL,
+							  s.TinhTrang,
+							  s.GiaSP,
+							  c.MoTa
+                        INTO #Results1
+                        FROM   SanPham s
+						inner join ChiTietSP c on c.SanPhamID = s.IDHangHoa
+						inner join LoaiSP l on l.MaLSP = s.LoaiSP
+					    WHERE  (@ten_sanpham = '' Or s.TenSP like N'%'+@ten_sanpham+'%') and						
+						(@TinhTrang = '' Or s.TinhTrang like N'%'+@TinhTrang+'%');      
+                        SELECT @RecordCount = COUNT(*)
                         FROM #Results1;
-                        SELECT r.*,
+                        SELECT *, 
                                @RecordCount AS RecordCount
-                        FROM #Results1 as r
+                        FROM #Results1
                         WHERE ROWNUMBER BETWEEN(@page_index - 1) * @page_size + 1 AND(((@page_index - 1) * @page_size + 1) + @page_size) - 1
                               OR @page_index = -1;
                         DROP TABLE #Results1; 
             END;
             ELSE
             BEGIN
-					SET NOCOUNT ON;
-					SELECT
-						ROW_NUMBER() OVER (ORDER BY s.TenSP ASC) AS RowNumber,
-						s.IDHangHoa,
-						s.LoaiSP,
-						s.SoL,
-						s.AnhSP,
-						s.TinhTrang,
-						s.GiaSP,
-						@list_json_chitietsanpham as list_json_chitietsanpham
-					INTO #Results2
-					FROM SanPham AS s
-					WHERE
-						(@TenSP = '' OR s.TenSP LIKE N'%' + @TenSP + '%')
-						and s.IDHangHoa = @IDHangHoa;
-                    SELECT @RecordCount = COUNT(*)
-                    FROM #Results2;
-                    SELECT *, 
-                            @RecordCount AS RecordCount
-                    FROM #Results2;                        
-                    DROP TABLE #Results1; 
-			END;
+						SET NOCOUNT ON;
+                        SELECT(ROW_NUMBER() OVER(
+                              ORDER BY s.TenSP ASC)) AS RowNumber, 
+                              s.IDHangHoa,
+							  s.TenSP,
+							  l.TenLH,
+							  s.SoL,
+							  s.TinhTrang,
+							  s.GiaSP,
+							  c.MoTa
+                        INTO #Results2
+                        FROM   SanPham s
+						inner join ChiTietSP c on c.SanPhamID = s.IDHangHoa
+						inner join LoaiSP l on l.MaLSP = s.LoaiSP
+					    WHERE  (@ten_sanpham = '' Or s.TenSP like N'%'+@ten_sanpham+'%') and						
+						(@TinhTrang = '' Or s.TinhTrang like N'%'+@TinhTrang+'%');      
+                        SELECT @RecordCount = COUNT(*)
+                        FROM #Results2;
+                        SELECT *, 
+                               @RecordCount AS RecordCount
+                        FROM #Results2                        
+                        DROP TABLE #Results2; 
+        END;
     END;
-GO
+ --//Tìm kiếm sản phẩm
+-- alter PROCEDURE [dbo].[sp_sanpham_search] (@page_index  INT, 
+--                                       @page_size   INT,
+--									   @TenSP Nvarchar(max),
+--									   @IDHangHoa nvarchar(10)
+--									   )
+--AS
+--    BEGIN
+--		DECLARE @list_json_chitietsanpham NVARCHAR(MAX);
+--		SELECT @list_json_chitietsanpham = (
+--								SELECT
+--									c.ChiTietSPID,
+--									c.SanPhamID,
+--									c.AnhCT,
+--									c.MoTa
+--								FROM ChiTietSP AS c
+--								WHERE c.SanPhamID = @IDHangHoa
+--								FOR JSON AUTO
+--							)
+--        DECLARE @RecordCount BIGINT;
+--        IF(@page_size <> 0)
+--            BEGIN
+--						SET NOCOUNT ON;
+--						SELECT
+--							ROW_NUMBER() OVER (ORDER BY s.TenSP ASC) AS RowNumber,
+--							s.IDHangHoa,
+--							s.LoaiSP,
+--							s.TenSP,
+--							s.SoL,
+--							s.AnhSP,
+--							s.TinhTrang,
+--							s.GiaSP,
+--							@list_json_chitietsanpham as list_json_chitietsanpham
+--						INTO #Results1
+--						FROM SanPham AS s
+--						WHERE
+--							(@TenSP = '' OR s.TenSP LIKE N'%' + @TenSP + '%')
+--							and s.IDHangHoa = @IDHangHoa;
+--						SELECT @RecordCount = COUNT(*)
+--                        FROM #Results1;
+--                        SELECT r.*,
+--                               @RecordCount AS RecordCount
+--                        FROM #Results1 as r
+--                        WHERE ROWNUMBER BETWEEN(@page_index - 1) * @page_size + 1 AND(((@page_index - 1) * @page_size + 1) + @page_size) - 1
+--                              OR @page_index = -1;
+--                        DROP TABLE #Results1; 
+--            END;
+--            ELSE
+--            BEGIN
+--					SET NOCOUNT ON;
+--					SELECT
+--						ROW_NUMBER() OVER (ORDER BY s.TenSP ASC) AS RowNumber,
+--						s.IDHangHoa,
+--						s.LoaiSP,
+--						s.SoL,
+--						s.AnhSP,
+--						s.TinhTrang,
+--						s.GiaSP,
+--						@list_json_chitietsanpham as list_json_chitietsanpham
+--					INTO #Results2
+--					FROM SanPham AS s
+--					WHERE
+--						(@TenSP = '' OR s.TenSP LIKE N'%' + @TenSP + '%')
+--						and s.IDHangHoa = @IDHangHoa;
+--                    SELECT @RecordCount = COUNT(*)
+--                    FROM #Results2;
+--                    SELECT *, 
+--                            @RecordCount AS RecordCount
+--                    FROM #Results2;                        
+--                    DROP TABLE #Results1; 
+--			END;
+--    END;
+--GO
 
  --//Get-by-id hóa đơn
 create PROCEDURE [dbo].[sp_hoadon_get_by_id](@MaHD nvarchar(10))
@@ -863,3 +938,182 @@ AS
 		delete from HoaDon where MaHD=@MaHD
     END;
 GO
+--//Thống kê khách hàng đã mua hàng
+alter PROCEDURE [dbo].[sp_thong_ke_khach] (@page_index  INT, 
+                                       @page_size   INT,
+									   @ten_khach Nvarchar(50),
+									   @fr_NgayTao datetime, 
+									   @to_NgayTao datetime
+									   )
+AS
+    BEGIN
+        DECLARE @RecordCount BIGINT;
+        IF(@page_size <> 0)
+            BEGIN
+						SET NOCOUNT ON;
+                        SELECT(ROW_NUMBER() OVER(
+                              ORDER BY h.NgayTao ASC)) AS RowNumber, 
+                              s.IDHangHoa,
+							  s.TenSP,
+							  c.SoL,
+							  c.TongGia,
+							  h.NgayTao,
+							  h.HoTenKh,
+							  h.DiaChi
+                        INTO #Results1
+                        FROM HoaDon  h
+						inner join ChiTieHD c on c.MaHD = h.MaHD
+						inner join SanPham s on s.IDHangHoa = c.MaHH
+					    WHERE  (@ten_khach = '' Or h.HoTenKh like N'%'+@ten_khach+'%') and						
+						((@fr_NgayTao IS NULL
+                        AND @to_NgayTao IS NULL)
+                        OR (@fr_NgayTao IS NOT NULL
+                            AND @to_NgayTao IS NULL
+                            AND h.NgayTao >= @fr_NgayTao)
+                        OR (@fr_NgayTao IS NULL
+                            AND @to_NgayTao IS NOT NULL
+                            AND h.NgayTao <= @to_NgayTao)
+                        OR (h.NgayTao BETWEEN @fr_NgayTao AND @to_NgayTao))              
+                        SELECT @RecordCount = COUNT(*)
+                        FROM #Results1;
+                        SELECT *, 
+                               @RecordCount AS RecordCount
+                        FROM #Results1
+                        WHERE ROWNUMBER BETWEEN(@page_index - 1) * @page_size + 1 AND(((@page_index - 1) * @page_size + 1) + @page_size) - 1
+                              OR @page_index = -1;
+                        DROP TABLE #Results1; 
+            END;
+            ELSE
+            BEGIN
+						SET NOCOUNT ON;
+                        SELECT(ROW_NUMBER() OVER(
+                              ORDER BY h.NgayTao ASC)) AS RowNumber, 
+                              s.IDHangHoa,
+							  s.TenSP,
+							  c.SoL,
+							  c.TongGia,
+							  h.NgayTao,
+							  h.HoTenKh,
+							  h.DiaChi
+                        INTO #Results2
+                        FROM HoaDon  h
+						inner join ChiTieHD c on c.MaHD = h.MaHD
+						inner join SanPham s on s.IDHangHoa = c.MaHH
+					    WHERE  (@ten_khach = '' Or h.HoTenKh like N'%'+@ten_khach+'%') and						
+						((@fr_NgayTao IS NULL
+                        AND @to_NgayTao IS NULL)
+                        OR (@fr_NgayTao IS NOT NULL
+                            AND @to_NgayTao IS NULL
+                            AND h.NgayTao >= @fr_NgayTao)
+                        OR (@fr_NgayTao IS NULL
+AND @to_NgayTao IS NOT NULL
+                            AND h.NgayTao <= @to_NgayTao)
+                        OR (h.NgayTao BETWEEN @fr_NgayTao AND @to_NgayTao))              
+                        SELECT @RecordCount = COUNT(*)
+                        FROM #Results2;
+                        SELECT *, 
+                               @RecordCount AS RecordCount
+                        FROM #Results2                        
+                        DROP TABLE #Results2; 
+        END;
+    END;
+--//GetbyID KhachHang
+create PROCEDURE [dbo].[sp_khach_get_by_id](@khachhang_id nvarchar(50))
+AS
+    BEGIN
+      SELECT  *
+      FROM KhachHang
+      where khachhang_id= @khachhang_id;
+    END;
+--//Thêm KhachHang
+alter PROCEDURE [dbo].[sp_khach_create](
+@khachhang_id nvarchar(50),
+@hoten nvarchar(max),
+@diachi nvarchar(250),
+@email nvarchar(max),
+@taikhoan nvarchar(max),
+@matkhau nvarchar(max)
+)
+AS
+    BEGIN
+       insert into KhachHang(khachhang_id,hoten,diachi,email,taikhoan,matkhau)
+	   values(@khachhang_id,@hoten,@diachi,@email,@taikhoan,@matkhau);
+    END;
+--//Sửa KhachHang
+create PROCEDURE [dbo].[sp_khach_update](
+@khachhang_id nvarchar(50),
+@hoten nvarchar(max),
+@diachi nvarchar(250),
+@email nvarchar(max),
+@taikhoan nvarchar(max),
+@matkhau nvarchar(max)
+)
+AS
+    BEGIN
+       Update  KhachHang
+	   set hoten=@hoten, diachi=@diachi ,email=@email, taikhoan=@taikhoan, matkhau=@matkhau
+	   where khachhang_id=@khachhang_id;
+    END;
+GO
+--//Xóa khách Hàng
+create PROCEDURE [dbo].[sp_khach_delete](
+@khachhang_id nvarchar(50)
+)
+AS
+    BEGIN
+       Delete from   KhachHang
+	   where khachhang_id=@khachhang_id;
+    END;
+GO
+--//Tìm Kiếm khách hàng
+create PROCEDURE [dbo].[sp_khach_search] (@page_index  INT, 
+                                       @page_size   INT,
+									   @ho_ten Nvarchar(max),
+									   @dia_chi Nvarchar(250)
+									   )
+AS
+    BEGIN
+        DECLARE @RecordCount BIGINT;
+        IF(@page_size <> 0)
+            BEGIN
+						SET NOCOUNT ON;
+                        SELECT(ROW_NUMBER() OVER(
+                              ORDER BY hoten ASC)) AS RowNumber, 
+                              k.khachhang_id,
+							  k.hoten,
+							  k.DiaChi
+                        INTO #Results1
+                        FROM KhachHang AS k
+					    WHERE  (@ho_ten = '' Or k.hoten like N'%'+@ho_ten+'%') and						
+						(@dia_chi = '' Or k.diachi like N'%'+@dia_chi+'%');                   
+                        SELECT @RecordCount = COUNT(*)
+                        FROM #Results1;
+                        SELECT *, 
+                               @RecordCount AS RecordCount
+                        FROM #Results1
+                        WHERE ROWNUMBER BETWEEN(@page_index - 1) * @page_size + 1 AND(((@page_index - 1) * @page_size + 1) + @page_size) - 1
+                              OR @page_index = -1;
+                        DROP TABLE #Results1; 
+            END;
+            ELSE
+            BEGIN
+						SET NOCOUNT ON;
+                        SELECT(ROW_NUMBER() OVER(
+                              ORDER BY hoten ASC)) AS RowNumber, 
+                              k.khachhang_id,
+							  k.hoten,
+							  k.DiaChi
+                        INTO #Results2
+                        FROM KhachHang AS k
+					    WHERE  (@ho_ten = '' Or k.hoten like N'%'+@ho_ten+'%') and						
+						(@dia_chi = '' Or k.diachi like N'%'+@dia_chi+'%');                               
+                        SELECT @RecordCount = COUNT(*)
+                        FROM #Results2;
+                        SELECT *, 
+                               @RecordCount AS RecordCount
+                        FROM #Results2;                        
+                        DROP TABLE #Results1; 
+        END;
+    END;
+
+
