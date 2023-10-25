@@ -654,7 +654,94 @@ AS
        WHERE s.TenSP LIKE '%' + @TenSP + '%';
     END;
  exec [dbo].[sp_sanpham_search] c
+ --//Tìm kiếm hóa đơn
+ alter PROCEDURE [dbo].[sp_sanpham_search] (@page_index  INT, 
+                                       @page_size   INT,
+									   @TenSP Nvarchar(max),
+									   @IDHangHoa nvarchar(10)
+									   )
+AS
+    BEGIN
+		DECLARE @list_json_chitietsanpham NVARCHAR(MAX);
+		SELECT @list_json_chitietsanpham = (
+								SELECT
+									c.ChiTietSPID,
+									c.SanPhamID,
+									c.AnhCT,
+									c.MoTa
+								FROM ChiTietSP AS c
+								WHERE c.SanPhamID = @IDHangHoa
+								FOR JSON AUTO
+							)
+        DECLARE @RecordCount BIGINT;
+        IF(@page_size <> 0)
+            BEGIN
+						SET NOCOUNT ON;
+						SELECT
+							ROW_NUMBER() OVER (ORDER BY s.TenSP ASC) AS RowNumber,
+							s.IDHangHoa,
+							s.LoaiSP,
+							s.TenSP,
+							s.SoL,
+							s.AnhSP,
+							s.TinhTrang,
+							s.GiaSP,
+							@list_json_chitietsanpham as list_json_chitietsanpham
+						INTO #Results1
+						FROM SanPham AS s
+						WHERE
+							(@TenSP = '' OR s.TenSP LIKE N'%' + @TenSP + '%')
+							and s.IDHangHoa = @IDHangHoa;
+						SELECT @RecordCount = COUNT(*)
+                        FROM #Results1;
+                        SELECT r.*,
+                               @RecordCount AS RecordCount
+                        FROM #Results1 as r
+                        WHERE ROWNUMBER BETWEEN(@page_index - 1) * @page_size + 1 AND(((@page_index - 1) * @page_size + 1) + @page_size) - 1
+                              OR @page_index = -1;
+                        DROP TABLE #Results1; 
+            END;
+            ELSE
+            BEGIN
+					SET NOCOUNT ON;
+					SELECT
+						ROW_NUMBER() OVER (ORDER BY s.TenSP ASC) AS RowNumber,
+						s.IDHangHoa,
+						s.LoaiSP,
+						s.SoL,
+						s.AnhSP,
+						s.TinhTrang,
+						s.GiaSP,
+						@list_json_chitietsanpham as list_json_chitietsanpham
+					INTO #Results2
+					FROM SanPham AS s
+					WHERE
+						(@TenSP = '' OR s.TenSP LIKE N'%' + @TenSP + '%')
+						and s.IDHangHoa = @IDHangHoa;
+                    SELECT @RecordCount = COUNT(*)
+                    FROM #Results2;
+                    SELECT *, 
+                            @RecordCount AS RecordCount
+                    FROM #Results2;                        
+                    DROP TABLE #Results1; 
+			END;
+    END;
+GO
 
+ --//Get-by-id hóa đơn
+create PROCEDURE [dbo].[sp_hoadon_get_by_id](@MaHD nvarchar(10))
+AS
+    BEGIN
+        SELECT h.*, 
+        (
+            SELECT c.*
+            FROM ChiTieHD AS c
+            WHERE h.MaHD = c.MaHD FOR JSON PATH
+        ) AS list_json_chitiethoadon
+        FROM HoaDon AS h
+        WHERE  h.MaHD = @MaHD;
+    END;
+ exec sp_hoadon_get_by_id '01'
 ---//Thêm hóa đơn
 create  PROCEDURE [dbo].[sp_hoadon_create]
 (@MaHD NVARCHAR(10),
