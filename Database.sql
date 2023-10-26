@@ -1116,4 +1116,19 @@ AS
         END;
     END;
 
+--//Login Khách hàng
+create PROCEDURE [dbo].[sp_login_khachhang](@taikhoan nvarchar(max), @matkhau nvarchar(max))
+AS
+    BEGIN
+      SELECT  *
+      FROM KhachHang
+      where taikhoan= @taikhoan and matkhau = @matkhau;
+    END;
 
+	Create PROCEDURE [dbo].[sp_login](@taikhoan nvarchar(50), @matkhau nvarchar(50))
+AS
+    BEGIN
+      SELECT  *
+      FROM TaiKhoans
+      where TenTaiKhoan= @taikhoan and MatKhau = @matkhau;
+    END;
