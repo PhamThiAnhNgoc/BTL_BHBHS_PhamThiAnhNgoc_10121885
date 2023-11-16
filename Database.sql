@@ -1017,14 +1017,6 @@ AND @to_NgayTao IS NOT NULL
                         DROP TABLE #Results2; 
         END;
     END;
---//GetbyID KhachHang
-create PROCEDURE [dbo].[sp_khach_get_by_id](@khachhang_id nvarchar(50))
-AS
-    BEGIN
-      SELECT  *
-      FROM KhachHang
-      where khachhang_id= @khachhang_id;
-    END;
 --//Thêm KhachHang
 alter PROCEDURE [dbo].[sp_khach_create](
 @khachhang_id nvarchar(50),
@@ -1055,21 +1047,27 @@ AS
 	   where khachhang_id=@khachhang_id;
     END;
 GO
---//Xóa khách Hàng
-create PROCEDURE [dbo].[sp_khach_delete](
-@khachhang_id nvarchar(50)
-)
+
+--//Login Khách hàng
+create PROCEDURE [dbo].[sp_login_khachhang](@taikhoan nvarchar(max), @matkhau nvarchar(max))
 AS
     BEGIN
-       Delete from   KhachHang
-	   where khachhang_id=@khachhang_id;
+      SELECT  *
+      FROM KhachHang
+      where taikhoan= @taikhoan and matkhau = @matkhau;
     END;
-GO
---//Tìm Kiếm khách hàng
-create PROCEDURE [dbo].[sp_khach_search] (@page_index  INT, 
+
+--Create PROCEDURE [dbo].[sp_login](@taikhoan nvarchar(50), @matkhau nvarchar(50))
+--AS
+--    BEGIN
+--      SELECT  *
+--      FROM TaiKhoans
+--      where TenTaiKhoan= @taikhoan and MatKhau = @matkhau;
+--    END;
+----//Tìm Kiếm sản phẩm theo khách hàng
+create PROCEDURE [dbo].[sp_khach_search_tensanpham] (@page_index  INT, 
                                        @page_size   INT,
-									   @ho_ten Nvarchar(max),
-									   @dia_chi Nvarchar(250)
+									   @TenSP Nvarchar(max)
 									   )
 AS
     BEGIN
@@ -1078,14 +1076,13 @@ AS
             BEGIN
 						SET NOCOUNT ON;
                         SELECT(ROW_NUMBER() OVER(
-                              ORDER BY hoten ASC)) AS RowNumber, 
-                              k.khachhang_id,
-							  k.hoten,
-							  k.DiaChi
+                              ORDER BY TenSP ASC)) AS RowNumber, 
+                              s.TenSP,
+							  s.AnhSP,
+							  s.GiaSP
                         INTO #Results1
-                        FROM KhachHang AS k
-					    WHERE  (@ho_ten = '' Or k.hoten like N'%'+@ho_ten+'%') and						
-						(@dia_chi = '' Or k.diachi like N'%'+@dia_chi+'%');                   
+                        FROM SanPham AS s
+					    WHERE  (@TenSP = '' Or s.TenSP like N'%'+@TenSP+'%');                   
                         SELECT @RecordCount = COUNT(*)
                         FROM #Results1;
                         SELECT *, 
@@ -1099,14 +1096,13 @@ AS
             BEGIN
 						SET NOCOUNT ON;
                         SELECT(ROW_NUMBER() OVER(
-                              ORDER BY hoten ASC)) AS RowNumber, 
-                              k.khachhang_id,
-							  k.hoten,
-							  k.DiaChi
+                              ORDER BY TenSP ASC)) AS RowNumber, 
+                              s.TenSP,
+							  s.AnhSP,
+							  s.GiaSP
                         INTO #Results2
-                        FROM KhachHang AS k
-					    WHERE  (@ho_ten = '' Or k.hoten like N'%'+@ho_ten+'%') and						
-						(@dia_chi = '' Or k.diachi like N'%'+@dia_chi+'%');                               
+                        FROM SanPham AS s
+					    WHERE  (@TenSP = '' Or s.TenSP like N'%'+@TenSP+'%');                               
                         SELECT @RecordCount = COUNT(*)
                         FROM #Results2;
                         SELECT *, 
@@ -1116,19 +1112,55 @@ AS
         END;
     END;
 
---//Login Khách hàng
-create PROCEDURE [dbo].[sp_login_khachhang](@taikhoan nvarchar(max), @matkhau nvarchar(max))
-AS
-    BEGIN
-      SELECT  *
-      FROM KhachHang
-      where taikhoan= @taikhoan and matkhau = @matkhau;
-    END;
+exec [dbo].[sp_khach_search_tensanpham] 1,100, N'C'
 
-	Create PROCEDURE [dbo].[sp_login](@taikhoan nvarchar(50), @matkhau nvarchar(50))
+--///Tìm kiếm loại sản phẩm theo khách
+create PROCEDURE [dbo].[sp_khach_search_tenloaisp] (@page_index  INT, 
+                                       @page_size   INT,
+									   @TenLH Nvarchar(max)
+									   )
 AS
     BEGIN
-      SELECT  *
-      FROM TaiKhoans
-      where TenTaiKhoan= @taikhoan and MatKhau = @matkhau;
+        DECLARE @RecordCount BIGINT;
+        IF(@page_size <> 0)
+            BEGIN
+						SET NOCOUNT ON;
+                        SELECT(ROW_NUMBER() OVER(
+                              ORDER BY TenLH ASC)) AS RowNumber, 
+							  l.TenLH,
+							  s.TenSP,
+							  s.AnhSP,
+							  s.GiaSP
+                        INTO #Results1
+                        FROM LoaiSP AS l full outer join  SanPham as s on s.LoaiSP=l.MaLSP
+					    WHERE  (@TenLH = '' Or l.TenLH like N'%'+@TenLH+'%')                   
+                        SELECT @RecordCount = COUNT(*)
+                        FROM #Results1;
+                        SELECT *, 
+                               @RecordCount AS RecordCount
+                        FROM #Results1
+                        WHERE ROWNUMBER BETWEEN(@page_index - 1) * @page_size + 1 AND(((@page_index - 1) * @page_size + 1) + @page_size) - 1
+                              OR @page_index = -1;
+                        DROP TABLE #Results1; 
+            END;
+            ELSE
+            BEGIN
+						SET NOCOUNT ON;
+                        SELECT(ROW_NUMBER() OVER(
+                              ORDER BY TenLH ASC)) AS RowNumber, 
+							  l.TenLH,
+                              s.TenSP,
+							  s.AnhSP,
+							  s.GiaSP
+                        INTO #Results2
+                        FROM LoaiSP AS l full outer join  SanPham as s on s.LoaiSP=l.MaLSP
+					    WHERE  (@TenLH = '' Or l.TenLH like N'%'+@TenLH+'%')                                 
+                        SELECT @RecordCount = COUNT(*)
+                        FROM #Results2;
+                        SELECT *, 
+                               @RecordCount AS RecordCount
+                        FROM #Results2;                        
+                        DROP TABLE #Results1; 
+        END;
     END;
+	exec [dbo].[sp_khach_search_tenloaisp] 1,100, N'C'
