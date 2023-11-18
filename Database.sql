@@ -523,6 +523,52 @@ AS
        Delete from   LoaiSP
 	   where MaLSP=@MaLSP;
     END;
+--/// Tìm kiếm loại sản phẩm
+create PROCEDURE [dbo].[sp_loaisp_search] (@page_index  INT, 
+                                       @page_size   INT,
+									 @TenLH  nvarchar(max))
+AS
+    BEGIN
+        DECLARE @RecordCount BIGINT;
+        IF(@page_size <> 0)
+            BEGIN
+						SET NOCOUNT ON;
+                        SELECT(ROW_NUMBER() OVER(
+                              ORDER BY TenLH ASC)) AS RowNumber, 
+                              l.MaLSP,
+							  l.TenLH,
+							  l.NoiDung
+                        INTO #Results1
+                        FROM LoaiSP AS l
+					    WHERE  (@TenLH = '' Or l.TenLH like N'%'+@TenLH+'%');                    
+                        SELECT @RecordCount = COUNT(*)
+                        FROM #Results1;
+                        SELECT *, 
+                               @RecordCount AS RecordCount
+                        FROM #Results1
+                        WHERE ROWNUMBER BETWEEN(@page_index - 1) * @page_size + 1 AND(((@page_index - 1) * @page_size + 1) + @page_size) - 1
+                              OR @page_index = -1;
+                        DROP TABLE #Results1; 
+            END;
+            ELSE
+            BEGIN
+						SET NOCOUNT ON;
+                         SELECT(ROW_NUMBER() OVER(
+                              ORDER BY TenLH ASC)) AS RowNumber, 
+                              l.MaLSP,
+							  l.TenLH,
+							  l.NoiDung
+                        INTO #Results2
+                        FROM LoaiSP AS l
+					    WHERE  (@TenLH = '' Or l.TenLH like N'%'+@TenLH+'%');                    
+                        SELECT @RecordCount = COUNT(*)
+                        FROM #Results2;
+                        SELECT *, 
+                               @RecordCount AS RecordCount
+                        FROM #Results2;                        
+                        DROP TABLE #Results1; 
+        END;
+    END;
 
 ---//GetById Sản phẩm
 Alter  PROCEDURE [dbo].[sp_sanpham_get_by_id](@IDHangHoa nvarchar(10))
@@ -537,7 +583,6 @@ AS
         FROM SanPham AS h
         WHERE  h.IDHangHoa = @IDHangHoa;
     END;
-
 
 --//Thêm sảm phẩm
 create  PROCEDURE [dbo].[sp_sanpham_create]
@@ -665,6 +710,60 @@ AS
 		delete from SanPham where IDHangHoa=@IDHangHoa
     END;
 GO
+--/// Tìm kiếm  sản phẩm
+create PROCEDURE [dbo].[sp_sanpham_search] (@page_index  INT, 
+                                       @page_size   INT,
+									 @TenSP  nvarchar(max))
+AS
+    BEGIN
+        DECLARE @RecordCount BIGINT;
+        IF(@page_size <> 0)
+            BEGIN
+						SET NOCOUNT ON;
+                        SELECT(ROW_NUMBER() OVER(
+                              ORDER BY TenSP ASC)) AS RowNumber, 
+                              s.IDHangHoa,
+							  s.LoaiSP,
+							  s.TenSP,
+							  s.AnhSP,
+							  s.SoL,
+							  s.GiaSP,
+							  s.TinhTrang
+                        INTO #Results1
+                        FROM SanPham AS s
+					    WHERE  (@TenSP = '' Or s.TenSP like N'%'+@TenSP+'%');                    
+                        SELECT @RecordCount = COUNT(*)
+                        FROM #Results1;
+                        SELECT *, 
+                               @RecordCount AS RecordCount
+                        FROM #Results1
+                        WHERE ROWNUMBER BETWEEN(@page_index - 1) * @page_size + 1 AND(((@page_index - 1) * @page_size + 1) + @page_size) - 1
+                              OR @page_index = -1;
+                        DROP TABLE #Results1; 
+            END;
+            ELSE
+            BEGIN
+						SET NOCOUNT ON;
+                        SELECT(ROW_NUMBER() OVER(
+                              ORDER BY TenSP ASC)) AS RowNumber, 
+                              s.IDHangHoa,
+							  s.LoaiSP,
+							  s.TenSP,
+							  s.AnhSP,
+							  s.SoL,
+							  s.GiaSP,
+							  s.TinhTrang
+                        INTO #Results2
+                        FROM SanPham AS s
+					    WHERE  (@TenSP = '' Or s.TenSP like N'%'+@TenSP+'%');                    
+                        SELECT @RecordCount = COUNT(*)
+                        FROM #Results2;
+                        SELECT *, 
+                               @RecordCount AS RecordCount
+                        FROM #Results2;                        
+                        DROP TABLE #Results1; 
+        END;
+    END;
 
 ---//Thống kê sản phẩm theo tình trạng
 
@@ -1056,14 +1155,14 @@ AS
       FROM KhachHang
       where taikhoan= @taikhoan and matkhau = @matkhau;
     END;
-
---Create PROCEDURE [dbo].[sp_login](@taikhoan nvarchar(50), @matkhau nvarchar(50))
---AS
---    BEGIN
---      SELECT  *
---      FROM TaiKhoans
---      where TenTaiKhoan= @taikhoan and MatKhau = @matkhau;
---    END;
+--///Login Quản trị
+Create PROCEDURE [dbo].[sp_quantrilogin](@taikhoan nvarchar(max), @matkhau nvarchar(max))
+AS
+    BEGIN
+      SELECT  *
+      FROM QuanTri
+      where taikhoan= @taikhoan and matkhau = @matkhau;
+    END;
 ----//Tìm Kiếm sản phẩm theo khách hàng
 create PROCEDURE [dbo].[sp_khach_search_tensanpham] (@page_index  INT, 
                                        @page_size   INT,
