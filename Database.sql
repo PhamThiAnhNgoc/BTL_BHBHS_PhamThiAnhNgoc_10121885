@@ -1263,3 +1263,10 @@ AS
         END;
     END;
 	exec [dbo].[sp_khach_search_tenloaisp] 1,100, N'C'
+--//GetallLoaisp
+Create PROCEDURE [dbo].[sp_getallloaisanpham]
+AS
+    BEGIN
+      SELECT  MaLSP
+      FROM LoaiSP
+    END;
