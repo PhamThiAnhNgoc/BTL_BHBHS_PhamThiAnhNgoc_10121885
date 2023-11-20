@@ -701,11 +701,12 @@ AS
         SELECT '';
     END;
 ---//Xóa sản phẩm
-create  PROCEDURE [dbo].[sp_sanpham_delete]
+alter   PROCEDURE [dbo].[sp_sanpham_delete]
 (@IDHangHoa NVARCHAR(10)
  )
 AS
     BEGIN
+		Delete from ChiTieHD where MaHH=@IDHangHoa
         Delete From ChiTietSP where SanPhamID=@IDHangHoa
 		delete from SanPham where IDHangHoa=@IDHangHoa
     END;
